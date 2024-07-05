@@ -18,7 +18,9 @@ async def request_all_player_bars():
 # calculate whether user's energy or nerve level reaches target_level, and notify the user
 # e.g. 80/100 is >= 0.8
 async def check_energy_or_nerve_reach_levels(target_user, target_level):
-    torn_user_bars = await request_all_player_bars()
+    global full_energy_notified, full_nerve_notified
+
+    torn_user_bars = await request_all_player_bars()    # calls API
     print(torn_user_bars)
 
     # calculate user_energy_level
@@ -36,15 +38,25 @@ async def check_energy_or_nerve_reach_levels(target_user, target_level):
     print(user_nerve_level, user_nerve_current, user_nerve_maximum)
 
     # notify user if necessary
-    if 1.0 > user_energy_level >= target_level:
+    if full_energy_notified == 0 and 1.0 > user_energy_level >= target_level:
         await notify_user(target_user,
                           f"Your energy is now {user_energy_level_rounded}% full! "
                           f"({user_energy_current} / {user_energy_maximum})")
+        if user_energy_level == 1.0:
+            full_energy_notified = 1
 
-    if 1.0 > user_nerve_level >= target_level:
+    if full_nerve_notified == 0 and 1.0 > user_nerve_level >= target_level:
         await notify_user(target_user,
                           f"Your nerve is now {user_nerve_level_rounded}% full! "
                           f"({user_nerve_current} / {user_nerve_maximum})")
+        if user_nerve_level == 1.0:
+            full_nerve_notified = 1
+
+    # check for 100% notify
+    if full_energy_notified == 0 and user_energy_level == 1.0:
+        full_energy_notified = 1
+    if full_nerve_notified == 0 and user_nerve_level == 1.0:
+        full_nerve_notified = 1
 
 
 async def notify_user(target_user, private_message):
