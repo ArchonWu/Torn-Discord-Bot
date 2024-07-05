@@ -15,7 +15,6 @@ bot.token = TOKEN
 for file in os.listdir(f"Cogs"):
     if file.endswith(".py"):
         bot.load_extension(f"Cogs.{file[:-3]}")
-    print(file)
 
 
 # bot start up
@@ -23,7 +22,9 @@ for file in os.listdir(f"Cogs"):
 async def on_ready():
     # Updates Bot Activity
     await bot.change_presence(
-        activity=discord.Activity(type=discord.ActivityType.watching, name=f"Torn Stats"))
+        activity=discord.Activity(
+            type=discord.ActivityType.watching,
+            name=f"you intently"))
 
     print("torn_bot running!")
 
