@@ -2,21 +2,20 @@ import asyncio
 import os
 from datetime import datetime
 from discord.ext import commands, tasks
+from Utilities import Functions
 
 
 class Loops(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.target_user_id = int(os.getenv('MY_DISCORD_USER_ID'))
+        self.target_user = self.bot.get_user(self.target_user_id)
 
     @tasks.loop(minutes=5)
     async def clock(self):
-        await self.send_private_message_to_user(self.target_user_id)
-
-    async def send_private_message_to_user(self, target_user_id):
-        user = self.bot.get_user(target_user_id)
-        if user:
-            await user.send("5 minutes has passed!")
+        if not self.target_user:
+            self.target_user = self.bot.get_user(self.target_user_id)
+        await Functions.check_energy_or_nerve_reach_levels(self.target_user, 0.75)
 
     @commands.Cog.listener()
     async def on_ready(self):
