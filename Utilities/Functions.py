@@ -7,7 +7,7 @@ full_energy_notified = 0
 full_nerve_notified = 0
 
 
-async def request_all_player_bars():
+async def request_all_player_stats():
     torn_api_key_limited = os.getenv('TORN_API_KEY_LIMITED')
     url = f"https://api.torn.com/user/?selections=bars&key={torn_api_key_limited}"
     async with aiohttp.ClientSession() as session:
@@ -20,7 +20,7 @@ async def request_all_player_bars():
 async def check_energy_or_nerve_reach_levels(target_user, target_level):
     global full_energy_notified, full_nerve_notified
 
-    torn_user_bars = await request_all_player_bars()    # calls API
+    torn_user_bars = await request_all_player_stats()    # calls API
     print(torn_user_bars)
 
     # calculate user_energy_level
