@@ -6,6 +6,7 @@ from discord.ext import commands
 from Utilities import Functions
 from enum import Enum
 
+
 class Stat(Enum):
     ENERGY = "energy"
     NERVE = "nerve"

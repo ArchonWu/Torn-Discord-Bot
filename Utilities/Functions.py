@@ -3,8 +3,8 @@ import os
 import aiohttp
 
 
-full_energy_notified = 0
-full_nerve_notified = 0
+full_stats_notified = []
+FULL_STATS = 1.0
 
 
 async def request_all_player_stats():
@@ -17,46 +17,37 @@ async def request_all_player_stats():
 
 # calculate whether user's energy or nerve level reaches target_level, and notify the user
 # e.g. 80/100 is >= 0.8
-async def check_energy_or_nerve_reach_levels(target_user, target_level):
-    global full_energy_notified, full_nerve_notified
+# e.g. stats_type can be one of energy, nerve, happy, health
+async def check_stats_type(stats_type, target_level, target_user):
+    global full_stats_notified
 
     torn_user_bars = await request_all_player_stats()    # calls API
-    print(torn_user_bars)
 
-    # calculate user_energy_level
-    user_energy_current = torn_user_bars["energy"]["current"]
-    user_energy_maximum = torn_user_bars["energy"]["maximum"]
-    user_energy_level = user_energy_current / user_energy_maximum
-    user_energy_level_rounded = round(user_energy_level * 100, 3)
-    print(user_energy_level, user_energy_current, user_energy_maximum)
+    user_stats_current = torn_user_bars[stats_type]["current"]
+    user_stats_maximum = torn_user_bars[stats_type]["maximum"]
+    user_stats_level = user_stats_current / user_stats_maximum
+    user_stats_level_rounded = round(user_stats_level * 100, 3)
 
-    # calculate user_nerve_level
-    user_nerve_current = torn_user_bars["nerve"]["current"]
-    user_nerve_maximum = torn_user_bars["nerve"]["maximum"]
-    user_nerve_level = user_nerve_current / user_nerve_maximum
-    user_nerve_level_rounded = round(user_nerve_level * 100, 3)
-    print(user_nerve_level, user_nerve_current, user_nerve_maximum)
+    if stats_type not in full_stats_notified:   # if last notify was not at FULL (100%)
+        if target_level <= user_stats_level < FULL_STATS:   # user_stats_level not full and is > target_level
+            await notify_user(target_user,
+                              f"Your {stats_type} is now {user_stats_level_rounded}% full!"
+                              f"({user_stats_current} / {user_stats_maximum})")
 
-    # notify user if necessary
-    if full_energy_notified == 0 and 1.0 > user_energy_level >= target_level:
-        await notify_user(target_user,
-                          f"Your energy is now {user_energy_level_rounded}% full! "
-                          f"({user_energy_current} / {user_energy_maximum})")
-        if user_energy_level == 1.0:
-            full_energy_notified = 1
+        # if current stats level == FULL (100%), add to full_stats_notified
+        if user_stats_level >= FULL_STATS:
+            full_stats_notified.append(stats_type)
 
-    if full_nerve_notified == 0 and 1.0 > user_nerve_level >= target_level:
-        await notify_user(target_user,
-                          f"Your nerve is now {user_nerve_level_rounded}% full! "
-                          f"({user_nerve_current} / {user_nerve_maximum})")
-        if user_nerve_level == 1.0:
-            full_nerve_notified = 1
+    elif stats_type in full_stats_notified:
+        # if last notification was at 100% (in full_stats_notified),
+        # but currently not FULL (<100%), notify user and remove from full_stats_notified
+        if user_stats_level < FULL_STATS:
+            await notify_user(target_user,
+                              f"Your {stats_type} is now {user_stats_level_rounded}% full!"
+                              f"({user_stats_current} / {user_stats_maximum})")
+            full_stats_notified.remove(stats_type)
 
-    # check for 100% notify
-    if full_energy_notified == 0 and user_energy_level == 1.0:
-        full_energy_notified = 1
-    if full_nerve_notified == 0 and user_nerve_level == 1.0:
-        full_nerve_notified = 1
+    print(stats_type, user_stats_level_rounded, full_stats_notified, FULL_STATS)
 
 
 async def notify_user(target_user, private_message):

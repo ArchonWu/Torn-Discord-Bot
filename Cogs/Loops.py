@@ -15,7 +15,9 @@ class Loops(commands.Cog):
     async def clock(self):
         if not self.target_user:
             self.target_user = self.bot.get_user(self.target_user_id)
-        await Functions.check_energy_or_nerve_reach_levels(self.target_user, 0.75)
+        # await Functions.check_energy_or_nerve_reach_levels(self.target_user, 0.75)
+        await Functions.check_stats_type("energy", 0.75, self.target_user)
+        await Functions.check_stats_type("nerve", 0.75, self.target_user)
 
     @commands.Cog.listener()
     async def on_ready(self):
