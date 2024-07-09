@@ -3,7 +3,7 @@ import os
 import aiohttp
 
 
-last_reported_values = {}  # dictionary to store last reported values
+last_reported_stats_values = {}  # dictionary to store last reported values
 
 
 async def request_all_player_stats():
@@ -18,7 +18,7 @@ async def request_all_player_stats():
 # e.g. 80/100 is >= 0.8
 # e.g. stats_type can be one of energy, nerve, happy, health, chain
 async def check_stats_type(stats_type, target_level, target_user):
-    global last_reported_values
+    global last_reported_stats_values
 
     torn_user_bars = await request_all_player_stats()    # calls API
 
@@ -27,23 +27,23 @@ async def check_stats_type(stats_type, target_level, target_user):
     user_stats_level = user_stats_current / user_stats_maximum
     user_stats_level_rounded = round(user_stats_level * 100, 1)
 
-    if stats_type not in last_reported_values:
+    if stats_type not in last_reported_stats_values:
         # last_reported_values is empty since this is the first time calling the API
         await notify_user(target_user,
                           f"Your {stats_type} is now {user_stats_level_rounded}% full!"
                           f"({user_stats_current} / {user_stats_maximum})")
-        last_reported_values[stats_type] = user_stats_current
+        last_reported_stats_values[stats_type] = user_stats_current
 
     else:   # stats_type in last_reported_values
-        last_reported_current = last_reported_values[stats_type]
+        last_reported_current = last_reported_stats_values[stats_type]
         # notify only if there is a change in stats, and meets or exceeds target_level
         if last_reported_current != user_stats_current and user_stats_level >= target_level:
             await notify_user(target_user,
                               f"Your {stats_type} is now {user_stats_level_rounded}% full!"
                               f"({user_stats_current} / {user_stats_maximum})")
-            last_reported_values[stats_type] = user_stats_current
+            last_reported_stats_values[stats_type] = user_stats_current
 
-        print(stats_type, user_stats_level, last_reported_values, last_reported_current)
+        print(stats_type, user_stats_level, last_reported_stats_values, last_reported_current)
 
 
 async def notify_user(target_user, private_message):
