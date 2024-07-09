@@ -29,9 +29,10 @@ async def check_stats_type(stats_type, target_level, target_user):
 
     if stats_type not in last_reported_stats_values:
         # last_reported_values is empty since this is the first time calling the API
-        await notify_user(target_user,
-                          f"Your {stats_type} is now {user_stats_level_rounded}% full!"
-                          f"({user_stats_current} / {user_stats_maximum})")
+        if user_stats_level >= target_level:
+            await notify_user(target_user,
+                              f"Your {stats_type} is now {user_stats_level_rounded}% full!"
+                              f"({user_stats_current} / {user_stats_maximum})")
         last_reported_stats_values[stats_type] = user_stats_current
 
     else:   # stats_type in last_reported_values
@@ -48,4 +49,3 @@ async def check_stats_type(stats_type, target_level, target_user):
 
 async def notify_user(target_user, private_message):
     await target_user.send(private_message)
-
