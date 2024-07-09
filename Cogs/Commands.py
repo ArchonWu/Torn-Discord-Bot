@@ -19,7 +19,7 @@ class Commands(commands.Cog):
         self.bot = bot
 
     @commands.slash_command(description="Display bars (e.g. energy, nerve)")
-    @commands.cooldown(1, 5, commands.BucketType.user)
+    @commands.cooldown(1, 30, commands.BucketType.user)
     async def stats(self, ctx):
 
         # Acknowledge receipt of the command
@@ -43,6 +43,8 @@ class Commands(commands.Cog):
                             inline=False)
 
         await ctx.send(embed=embed)
+
+        # TODO: calculate and send estimated stats' full time
 
 
 def setup(bot):

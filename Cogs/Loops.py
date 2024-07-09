@@ -19,6 +19,8 @@ class Loops(commands.Cog):
         await Functions.check_stats_type("energy", 0.75, self.target_user)
         await Functions.check_stats_type("nerve", 0.75, self.target_user)
 
+    # TODO: ~30min loop to check for shoplifting shops' status
+
     @commands.Cog.listener()
     async def on_ready(self):
         if not self.clock.is_running():
