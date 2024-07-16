@@ -3,7 +3,10 @@ import os
 import aiohttp
 
 
-async def request_all_player_bars():
+last_reported_stats_values = {}  # dictionary to store last reported values
+
+
+async def request_all_player_stats():
     torn_api_key_limited = os.getenv('TORN_API_KEY_LIMITED')
     url = f"https://api.torn.com/user/?selections=bars&key={torn_api_key_limited}"
     async with aiohttp.ClientSession() as session:
@@ -11,36 +14,38 @@ async def request_all_player_bars():
             return await resp.json()
 
 
-# calculate whether user's energy or nerve level reaches target_level
+# calculate whether user's energy or nerve level reaches target_level, and notify the user
 # e.g. 80/100 is >= 0.8
-async def check_energy_or_nerve_reach_levels(target_user, target_level):
-    torn_user_bars = await request_all_player_bars()
-    print(torn_user_bars)
+# e.g. stats_type can be one of energy, nerve, happy, health, chain
+async def check_stats_type(stats_type, target_level, target_user):
+    global last_reported_stats_values
 
-    # calculate user_energy_level
-    user_energy_current = torn_user_bars["energy"]["current"]
-    user_energy_maximum = torn_user_bars["energy"]["maximum"]
-    user_energy_level = user_energy_current / user_energy_maximum
-    print(user_energy_level, user_energy_current, user_energy_maximum)
+    torn_user_bars = await request_all_player_stats()    # calls API
 
-    # calculate user_nerve_level
-    user_nerve_current = torn_user_bars["nerve"]["current"]
-    user_nerve_maximum = torn_user_bars["nerve"]["maximum"]
-    user_nerve_level = user_nerve_current / user_nerve_maximum
-    print(user_nerve_level, user_nerve_current, user_nerve_maximum)
+    user_stats_current = torn_user_bars[stats_type]["current"]
+    user_stats_maximum = torn_user_bars[stats_type]["maximum"]
+    user_stats_level = user_stats_current / user_stats_maximum
+    user_stats_level_rounded = round(user_stats_level * 100, 1)
 
-    # notify user if necessary
-    if user_energy_level > target_level:
-        await notify_user(target_user,
-                          f"Your energy is now {round(target_level*100, 3)}% full! "
-                          f"({user_energy_current} / {user_energy_maximum})")
+    if stats_type not in last_reported_stats_values:
+        # last_reported_values is empty since this is the first time calling the API
+        if user_stats_level >= target_level:
+            await notify_user(target_user,
+                              f"Your {stats_type} is now {user_stats_level_rounded}% full!"
+                              f"({user_stats_current} / {user_stats_maximum})")
+        last_reported_stats_values[stats_type] = user_stats_current
 
-    if user_nerve_level > target_level:
-        await notify_user(target_user,
-                          f"Your nerve is now {round(target_level*100, 3)}% full! "
-                          f"({user_nerve_current} / {user_nerve_maximum})")
+    else:   # stats_type in last_reported_values
+        last_reported_current = last_reported_stats_values[stats_type]
+        # notify only if there is a change in stats, and meets or exceeds target_level
+        if last_reported_current != user_stats_current and user_stats_level >= target_level:
+            await notify_user(target_user,
+                              f"Your {stats_type} is now {user_stats_level_rounded}% full!"
+                              f"({user_stats_current} / {user_stats_maximum})")
+            last_reported_stats_values[stats_type] = user_stats_current
+
+        print(stats_type, user_stats_level, last_reported_stats_values, last_reported_current)
 
 
 async def notify_user(target_user, private_message):
     await target_user.send(private_message)
-
